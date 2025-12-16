@@ -1,1 +1,1 @@
-print("Python file 2")
+print(int(input("Enter number")))
