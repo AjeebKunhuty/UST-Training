@@ -1,0 +1,33 @@
+queues:
+  - name: SymbolQueue
+    description: Queue for processing symbols
+
+  - name: PostgresUploading
+    description: Queue for PostgreSQL operations
+  
+workers:
+  - name: WikiWorker
+    description: Worker to scrape Wikipedia data
+    note: Only have one instance here, to avoid repeating the same work
+    location: workers.WikiWorker
+    class: WikiWorkerMasterScheduler
+    input_values:
+      - 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    output_queues:
+      - SymbolQueue
+    
+  - name: YahooFinanceWorker
+    description: Worker to fetch financial data from Yahoo Finance
+    location: workers.YahooFinanceWorkers
+    class: YahooFinancePriceScheduler
+    instances: 2
+    input_queue: SymbolQueue
+    output_queues:
+      - PostgresUploading
+
+  - name: PostgresWorker
+    description: Worker to upload data to PostgreSQL
+    location: workers.PostgresWorker
+    class: PostgresMasterScheduler
+    instances: 6
+    input_queue: PostgresUploading
